@@ -1,0 +1,18 @@
+name = "MPSSimulator"
+uuid = "d4a59c00-a914-4c14-b0c9-edb4f45e0bf3"
+license = "MIT"
+version = "0.1.0"
+authors = ["Marvellous <ifezueyoung@gmail.com>"]
+description = "MPS simulator"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+LinearAlgebra = "1.12.0"
+Test = "1.11.0"
+
+[test]
+name = "MPSSimulatorTestEnv"
+uuid = "c130e2be-50de-4009-a08d-eab863d9f0f9"
