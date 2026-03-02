@@ -1,8 +1,6 @@
 using Test, LinearAlgebra, Random
 
-# Include the module
-using ..MPSSimulator    # the dot means "current file/module"
-
+using ..MPSSimulator
 
 function printListOfArrays(list)
     n = length(list)
@@ -100,8 +98,6 @@ end
         currentBondDimeonsion = min(2^i, 2^(n - i))
         @test size(C[i]) == (previousBondDimension * 2, currentBondDimeonsion)
     end
-
-    printListOfArrays(C)
 end
 
 @testset "Test we can get back exact statevector for GHZ state" begin
@@ -182,26 +178,3 @@ end
     @test D[1] ≈ 1.0 atol = 1e-12
     @test sum(abs2, D) ≈ 1.0 atol = 1e-12
 end
-
-# @testset "Test Hadamard gate works" begin
-#     n = rand(1:10)
-#     n = 4
-#     N = 2^n
-#     zero_state = zeros(ComplexF64, N)
-#     zero_state[1] = 1 + 0im
-#     @info("N = $n for the test")
-#
-#     A = reshape(zero_state, ntuple(_ -> 2, n))
-#
-#     B = reshapeTensorForMPS(A)
-#
-#     C = createTensorTrainFromReshapedArray(B)
-#
-#     qc = QuantumCircuit(n)
-#
-#     D = getStatevectorFromTensorTrain(qc.state)
-#
-#     @test D ≈ A atol = 1e-12
-#     @test D[1] ≈ 1.0 atol = 1e-12
-#     @test sum(abs2, D) ≈ 1.0 atol = 1e-12
-# end

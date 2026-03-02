@@ -1,5 +1,6 @@
 using LinearAlgebra
 
+using Base: IdentityUnitRange
 struct QuantumCircuit
     state::Vector{VecOrMat{ComplexF64}}
     # maxBondDimension::Int
@@ -25,18 +26,9 @@ struct QuantumCircuit
     end
 end
 
-function h!(qc::QuantumCircuit, index::Int)
-    M = [1 1; 1 -1]
-    applySingleQubitTransformation!(qc, index, M)
-end
-
-function applySingleQubitTransformation!(qc::QuantumCircuit, index::Int, transformation::Matrix)
-    qc.state[index] = qc.state[index] * transformation
-end
-
 function reshapeTensorForMPS(tensor::AbstractArray)::Matrix
     if all(size(tensor) .!= 2)
-        throw(ArgumentError("Tensor must have shape (2,2,2,2), but got $(size(A))"))
+        throw(ArgumentError("Tensor must have shape (2,2,2,2.....), but got $(size(A))"))
     end
 
     n = ndims(tensor)
@@ -53,7 +45,6 @@ function createTensorTrainFromReshapedArray(matrix::Matrix)::Vector{VecOrMat{Com
     A = svd(matrix)
 
     # Stabilize the sign of each column of U
-    # I still dont fully understand why this works, but we are essentially
     # choosing a deterministic convention to prevent scaling eiganvalue issues
     # Doesnt change state, just makes sure local sites are positive
     for i in 1:size(A.U, 2)
@@ -96,4 +87,3 @@ function getStatevectorFromTensorTrain(list::Vector{VecOrMat{ComplexF64}})
 
     return state
 end
-
