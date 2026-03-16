@@ -1,7 +1,37 @@
 using LinearAlgebra
+using TensorOperations
 
 function cx!(qc::QuantumCircuit, qubit1::Int, qubit2::Int)
-    M = [1 0 0 0; 0 0 0 1; 0 0 1 0; 0 1 0 0]
+    M = ComplexF64[
+        1 0 0 0;
+        0 1 0 0;
+        0 0 0 1; # Row 3: maps |10> to |11>
+        0 0 1 0  # Row 4: maps |11> to |10>
+    ]
+    applyMultiQubitTransformation!(qc, qubit1, qubit2, M)
+end
+
+function cz!(qc::QuantumCircuit, qubit1::Int, qubit2::Int)
+    M = [1 0 0 0;
+        0 1 0 0;
+        0 0 1 0;
+        0 0 0 -1]
+    applyMultiQubitTransformation!(qc, qubit1, qubit2, M)
+end
+
+function cy!(qc::QuantumCircuit, qubit1::Int, qubit2::Int)
+    M = [1 0 0 0;
+        0 0 0 -im;
+        0 0 1 0;
+        0 im 0 0]
+    applyMultiQubitTransformation!(qc, qubit1, qubit2, M)
+end
+
+function swap!(qc::QuantumCircuit, qubit1::Int, qubit2::Int)
+    M = [1 0 0 0;
+        0 0 1 0;
+        0 1 0 0;
+        0 0 0 1]
     applyMultiQubitTransformation!(qc, qubit1, qubit2, M)
 end
 
@@ -13,50 +43,29 @@ function applyMultiQubitTransformation!(qc::QuantumCircuit, qubit1::Int, qubit2:
     end
 end
 
-function applyLocalMultiQubitTransformation!(qc::QuantumCircuit, qubit1::Int, qubit2::Int, transformation::Matrix)
-    # TODO test
-    site1 = qc.state[min(qubit1, qubit2)]
-    site2 = qc.state[max(qubit1, qubit2)]
+function applyLocalMultiQubitTransformation!(qc::QuantumCircuit, qubitIndex1::Int, qubitIndex2::Int, twoQubitGate::Matrix)
+    site1 = qc.state[qubitIndex1]
+    site2 = qc.state[qubitIndex2]
 
-    site1RowSize, site1ColSize = size(site1)
-    site2RowSize, site2ColSize = size(site2)
+    l1, r1 = size(site1)
+    l2, r2 = size(site2)
+    l1 ÷= 2
+    l2 ÷= 2
 
-    site2 = reshape(site2, trunc(Int, site2RowSize / 2), site2ColSize * 2)
+    A = reshape(site1, l1, 2, r1)
+    B = reshape(site2, l2, 2, r2)
 
-    contracted = site1 * site2
-    transformationRowSize, transformationColSize = size(transformation)
-    contracted = reshape(contracted, transformationRowSize, :)
+    @tensor combined[ll, i1, i2, rr] := A[ll, i1, b] * B[b, i2, rr]
 
-    # Order matters here T(x) = Ax
-    Tx = transformation * contracted
-    display(Tx)
+    gateTensor = reshape(ComplexF64.(twoQubitGate), 2, 2, 2, 2)
 
-    # Seperate the two sites back to original
-    A = svd(Tx)
+    @tensor transformed[ll, o1, o2, rr] := gateTensor[o1, o2, i1, i2] * combined[ll, i1, i2, rr]
 
-    # Stabilize the sign of each column of U
-    # choosing a deterministic convention to prevent scaling eiganvalue issues
-    # Doesnt change state, just makes sure local sites are positive
-    for i in 1:size(A.U, 2)
-        firstNonZero = findfirst(x -> abs(x) > 1e-12, A.U[:, i])
+    U, S, Vt = svd(reshape(transformed, l1 * 2, 2 * r2))
+    χ = length(S)
 
-        if firstNonZero !== nothing
-            phase = A.U[firstNonZero, i] / abs(A.U[firstNonZero, i])
-            A.U[:, i] .= A.U[:, i] / phase
-            A.Vt[i, :] .= A.Vt[i, :] * phase
-        end
-    end
-
-    sV = Diagonal(A.S) * A.Vt
-
-    reshapedSV = reshape(sV, site1RowSize, site1ColSize)
-
-    qc.state[qubit1] = reshapedSV
-    qc.state[qubit2] = A.U
-
-    # site2 = reshape(site2, site2RowSize, site2ColSize)
-    # display(A.U)
-    # display(reshapedSV)
+    qc.state[qubitIndex1] = U
+    qc.state[qubitIndex2] = reshape(Diagonal(S) * Vt, χ * 2, r2)
 end
 
 function applyNonLocalMultiQubitTransformation!(qc::QuantumCircuit, qubit1::Int, qubit2::Int, transformation::Matrix)

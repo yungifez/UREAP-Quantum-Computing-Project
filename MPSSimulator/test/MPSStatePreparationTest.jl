@@ -14,7 +14,7 @@ end
     A = reshape(collect(1:16), 2, 2, 2, 2)  # shape: (2,2,2,2)
 
     # Apply reshape
-    B = reshapeTensorForMPS(A)
+    B = reshapeStateVectorForMPS(A)
 
     # This looks weird but Julia is a column major language so it means that
     # it stores elements column wise ie [1,3; 2,4], looks like
@@ -67,7 +67,7 @@ end
     N = 2^n
     A = reshape(collect(1:N), shape...)
 
-    B = reshapeTensorForMPS(A)
+    B = reshapeStateVectorForMPS(A)
 
     @test size(B) == (2, div(N, 2))
     @test B[ntuple(_ -> 1, n)...] == 1
@@ -87,7 +87,7 @@ end
 
     A = reshape(ghz_vec, ntuple(_ -> 2, n))
 
-    B = reshapeTensorForMPS(A)
+    B = reshapeStateVectorForMPS(A)
 
     C = createTensorTrainFromReshapedArray(B)
 
@@ -110,7 +110,7 @@ end
 
     A = reshape(ghz_vec, ntuple(_ -> 2, n))
 
-    B = reshapeTensorForMPS(A)
+    B = reshapeStateVectorForMPS(A)
 
     C = createTensorTrainFromReshapedArray(B)
 
@@ -130,7 +130,7 @@ end
 
     A = reshape(ent_vec, ntuple(_ -> 2, n))
 
-    B = reshapeTensorForMPS(A)
+    B = reshapeStateVectorForMPS(A)
     C = createTensorTrainFromReshapedArray(B)
 
     D = getStatevectorFromTensorTrain(C)
@@ -147,7 +147,7 @@ end
 
     A = reshape(zero_vec, ntuple(_ -> 2, n))
 
-    B = reshapeTensorForMPS(A)
+    B = reshapeStateVectorForMPS(A)
 
     C = createTensorTrainFromReshapedArray(B)
 
@@ -166,7 +166,7 @@ end
 
     A = reshape(zero_state, ntuple(_ -> 2, n))
 
-    B = reshapeTensorForMPS(A)
+    B = reshapeStateVectorForMPS(A)
 
     C = createTensorTrainFromReshapedArray(B)
 

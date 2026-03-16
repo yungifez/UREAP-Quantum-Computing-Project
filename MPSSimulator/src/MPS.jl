@@ -28,7 +28,7 @@ end
 
 function reshapeTensorForMPS(tensor::AbstractArray)::Matrix
     if all(size(tensor) .!= 2)
-        throw(ArgumentError("Tensor must have shape (2,2,2,2.....), but got $(size(A))"))
+        throw(ArgumentError("Tensor must have shape (2,2,2,2.....), but got $(size(tensor))"))
     end
 
     n = ndims(tensor)
@@ -71,19 +71,18 @@ function getStatevectorFromTensorTrain(list::Vector{VecOrMat{ComplexF64}})
 
     for i in 2:n
         current = list[i]
-        rowSize, colSize = size(current)
+        stateRowSize, stateColSize = size(state)
+        currRowSize, currColSize = size(current)
 
         # Reshape to match the dimensions of the previous matrix
-        current = reshape(current, trunc(Int, rowSize / 2), colSize * 2)
+        current = reshape(current, trunc(Int, currRowSize / 2), :)
+        state = reshape(state, :, trunc(Int, currRowSize / 2))
         state = state * current
-
-        rowSize, colSize = size(state)
-
-        # Reshape to get back intended shape
-        state = reshape(state, rowSize * 2, trunc(Int, colSize / 2))
     end
+
     newSize = ntuple(_ -> 2, n)
     state = reshape(state, newSize)
 
     return state
 end
+

@@ -9,7 +9,7 @@ export
     QuantumCircuit,
 
     # Tensor Train / MPS Utilities
-    reshapeTensorForMPS,
+    reshapeStateVectorForMPS,
     createTensorTrainFromReshapedArray,
     getStatevectorFromTensorTrain,
     applySingleQubitTransformation!,
