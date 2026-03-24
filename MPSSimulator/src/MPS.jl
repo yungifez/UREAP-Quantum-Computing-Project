@@ -80,9 +80,10 @@ function getStatevectorFromTensorTrain(list::Vector{VecOrMat{ComplexF64}})
         state = state * current
     end
 
-    newSize = ntuple(_ -> 2, n)
-    state = reshape(state, newSize)
+    total_elements = length(state)
+    n_qubits = Int(log2(total_elements))
+    dynamic_shape = ntuple(_ -> 2, n_qubits)
 
-    return state
+    return reshape(state, dynamic_shape)
 end
 
