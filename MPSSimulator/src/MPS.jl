@@ -1,4 +1,5 @@
 using LinearAlgebra
+using TensorOperations
 
 using Base: IdentityUnitRange
 struct QuantumCircuit
@@ -65,25 +66,26 @@ function createTensorTrainFromReshapedArray(matrix::Matrix)::Vector{VecOrMat{Com
     return [A.U, createTensorTrainFromReshapedArray(reshapedSV)...]
 end
 
-function getStatevectorFromTensorTrain(list::Vector{VecOrMat{ComplexF64}})
+function getStatevectorFromTensorTrain(list)
     n = length(list)
     state = list[1]
 
     for i in 2:n
-        current = list[i]
-        stateRowSize, stateColSize = size(state)
-        currRowSize, currColSize = size(current)
+        curr = list[i]
+        bond_dim = size(state, ndims(state))
 
-        # Reshape to match the dimensions of the previous matrix
-        current = reshape(current, trunc(Int, currRowSize / 2), :)
-        state = reshape(state, :, trunc(Int, currRowSize / 2))
-        state = state * current
+        flat_state = reshape(state, :, bond_dim)
+        flat_curr = reshape(curr, bond_dim, :)
+        contracted = flat_state * flat_curr
+
+        if i == n
+            num_qubits = round(Int, log2(length(contracted)))
+            state = reshape(contracted, ntuple(_ -> 2, num_qubits))
+        else
+            r_out = size(curr, ndims(curr))
+            num_phys_so_far = round(Int, log2(length(contracted) ÷ r_out))
+            state = reshape(contracted, (ntuple(_ -> 2, num_phys_so_far)..., r_out))
+        end
     end
-
-    total_elements = length(state)
-    n_qubits = Int(log2(total_elements))
-    dynamic_shape = ntuple(_ -> 2, n_qubits)
-
-    return reshape(state, dynamic_shape)
+    return state
 end
-

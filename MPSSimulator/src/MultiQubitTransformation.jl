@@ -3,10 +3,10 @@ using TensorOperations
 
 function cx!(qc::QuantumCircuit, qubit1::Int, qubit2::Int)
     M = [
-        0 0 1 0;
-        0 0 0 1;
         1 0 0 0;
-        0 1 0 0
+        0 1 0 0;
+        0 0 0 1;
+        0 0 1 0
     ]
     applyMultiQubitTransformation!(qc, qubit1, qubit2, M)
 end
@@ -43,42 +43,33 @@ function applyMultiQubitTransformation!(qc::QuantumCircuit, qubit1::Int, qubit2:
     end
 end
 
-function applyLocalMultiQubitTransformation!(qc::QuantumCircuit, qubitIndex1::Int, qubitIndex2::Int, twoQubitGate::Matrix)
-    siteTensor1 = qc.state[qubitIndex1]
-    siteTensor2 = qc.state[qubitIndex2]
-
-    # Reshape to (out1, out2, in1, in2)
-    gateTensor = reshape(ComplexF64.(twoQubitGate), 2, 2, 2, 2)
-    contractedTensor = getStatevectorFromTensorTrain(VecOrMat{ComplexF64}[siteTensor1, siteTensor2])
-
-    if qubitIndex1 == 1
-        # contractedTensor: [op1, op2, r]
-        @tensor transformedTensor[op1, op2, r] :=
-            gateTensor[p1, op1, p2, op2] * contractedTensor[p1, p2, r]
-
-        # Split: (p1) and (p2, r)
-        p1, p2, r = size(transformedTensor)
-        U, S, Vt = svd(reshape(transformedTensor, p1, p2 * r))
-
-    elseif qubitIndex1 == length(qc.state) - 1
-        @tensor transformedTensor[l, op1, op2] :=
-            gateTensor[p1, op1, p2, op2] * contractedTensor[l, p1, p2]
-
-        # Split: (l, p1) and (p2)
-        l, p1, p2 = size(transformedTensor)
-        U, S, Vt = svd(reshape(transformedTensor, l * p1, p2))
-    else
-        # contractedTensor: [l, op1, op2, r]
-        @tensor transformedTensor[l, op1, op2, r] :=
-            gateTensor[p1, op1, p2, op2] * contractedTensor[l, p1, p2, r]
-
-        # Split: (l, p1) and (p2, r)
-        l, p1, p2, r = size(transformedTensor)
-        U, S, Vt = svd(reshape(transformedTensor, l * p1, p2 * r))
+function applyLocalMultiQubitTransformation!(qc::QuantumCircuit, q1::Int, q2::Int, gate::Matrix)
+    if q1 > q2
+        q1, q2 = q2, q1
     end
 
-    qc.state[qubitIndex1] = U * Diagonal(S)
-    qc.state[qubitIndex2] = Matrix{ComplexF64}(Vt)
+    A = reshape(qc.state[q1], 2, 1, :)
+
+    bond1 = size(qc.state[q1], 2)
+    B = reshape(qc.state[q2], 2, bond1, :)
+
+    G = reshape(ComplexF64.(gate), 2, 2, 2, 2)
+
+    println(size(A))
+    println(size(B))
+
+    @tensor combined[p1, p2, l, r] := A[p1, l, b] * B[p2, b, r]
+
+    @tensor transformed[o1, o2, l, r] := G[o1, o2, i1, i2] * combined[i1, i2, l, r]
+
+    L, R = size(A, 2), size(B, 3)
+    U, S, Vt = svd(reshape(transformed, 2 * L, 2 * R))
+
+    new_bond = length(S)
+    US = U * Diagonal(S)
+
+    qc.state[q1] = reshape(US, 2, new_bond)
+    qc.state[q2] = reshape(Matrix{ComplexF64}(Vt), 2 * new_bond, R)
 end
 
 function applyNonLocalMultiQubitTransformation!(qc::QuantumCircuit, qubit1::Int, qubit2::Int, transformation::Matrix)
