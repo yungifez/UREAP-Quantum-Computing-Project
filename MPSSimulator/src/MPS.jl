@@ -14,11 +14,11 @@ struct QuantumCircuit
         state = Vector{Matrix{ComplexF64}}()
 
         for i in 1:n
-            previousBondDimension = min(2^(i - 1), 2^(n - (i - 1)))
-            currentBondDimeonsion = min(2^i, 2^(n - i))
+            # Each tensor is (2 x 1 x 1) flattened into matrix form
+            A = zeros(2, 1)
 
-            A = zeros(previousBondDimension * 2, currentBondDimeonsion)
-            A[diagind(A)] .= 1
+            # Set |0⟩ amplitude
+            A[1, 1] = 1.0 + 0.0im
 
             push!(state, A)
         end
