@@ -26,5 +26,8 @@ export
     rz!,
 
     # Single Qubit Gates
-    cx!
+    cx!,
+    cy!,
+    cz!,
+    swap!
 end # module MpsSimulator

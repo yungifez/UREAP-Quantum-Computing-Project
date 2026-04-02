@@ -11,19 +11,19 @@ function cx!(qc::QuantumCircuit, qubit1::Int, qubit2::Int)
     applyMultiQubitTransformation!(qc, qubit1, qubit2, M)
 end
 
+function cy!(qc::QuantumCircuit, qubit1::Int, qubit2::Int)
+    M = [1 0 0 0;
+        0 1 0 0;
+        0 0 0 -im;
+        0 0 im 0]
+    applyMultiQubitTransformation!(qc, qubit1, qubit2, M)
+end
+
 function cz!(qc::QuantumCircuit, qubit1::Int, qubit2::Int)
     M = [1 0 0 0;
         0 1 0 0;
         0 0 1 0;
         0 0 0 -1]
-    applyMultiQubitTransformation!(qc, qubit1, qubit2, M)
-end
-
-function cy!(qc::QuantumCircuit, qubit1::Int, qubit2::Int)
-    M = [1 0 0 0;
-        0 0 0 -im;
-        0 0 1 0;
-        0 im 0 0]
     applyMultiQubitTransformation!(qc, qubit1, qubit2, M)
 end
 
@@ -85,5 +85,6 @@ function applyLocalMultiQubitTransformation!(qc::QuantumCircuit, q1::Int, q2::In
 end
 
 function applyNonLocalMultiQubitTransformation!(qc::QuantumCircuit, qubit1::Int, qubit2::Int, transformation::Matrix)
+
 end
 
